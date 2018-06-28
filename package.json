@@ -1,0 +1,19 @@
+{
+  "name": "voice-streaming",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google-cloud/text-to-speech": "^0.2.0",
+    "@types/body-parser": "^1.17.0",
+    "body-parser": "^1.18.3",
+    "cors": "^2.8.4",
+    "express": "^4.15.4",
+    "util": "^0.11.0"
+  }
+}
