@@ -21,7 +21,7 @@ const highWaterMark =  2;
 /**
  * Sintetizar áudio a partir de texto fornecido. 
  */
-app.get('/audio/synthesizeText', (req, res) => {
+app.get('/audio/synthesizeTextGoogle', (req, res) => {
   const idChat = req.query.idChat;
   const idAudio = idChat+'_'+(new Date()).getTime();
   const text = req.query.text;
@@ -62,6 +62,60 @@ app.get('/audio/synthesizeText', (req, res) => {
   res.send("É necessário fornecer o identificador do chat (idChat) e o texto (text) a ser sintetizado.");
   return;
 }
+});
+
+
+/**
+ * Sintetizar áudio a partir de texto fornecido. 
+ */
+app.get('/audio/synthesizeTextAmazon', (req, res) => {
+  const idChat = req.query.idChat;
+  const idAudio = idChat+'_'+(new Date()).getTime();
+  const text = req.query.text;
+  const outputFile = 'audios/' + idAudio + '.mp3'
+  
+  if(idAudio && text) {
+    // Load the SDK
+    const AWS = require('aws-sdk')
+
+    AWS.config.credentials = new AWS.Credentials("AKIAIEAFZBF43XJKMP3A", "0nJ08y69ePG7gpXc9bCYUF/ecI91rp82GnJPjOQ8");
+
+    const Fs = require('fs')
+
+    // Create an Polly client
+    const Polly = new AWS.Polly({
+        signatureVersion: 'v4',
+        region: 'us-east-1'
+    })
+
+    let params = {
+        'Text': text,
+        'OutputFormat': 'mp3',
+        'VoiceId': 'Vitoria'
+    }
+
+    Polly.synthesizeSpeech(params, (err, data) => {
+        if (err) {
+            console.log(err.code)
+        } else if (data) {
+            if (data.AudioStream instanceof Buffer) {
+                Fs.writeFile(outputFile, data.AudioStream, function(err) {
+                    if (err) {
+                      console.error('ERROR:', err);
+                      return;
+                    }
+                    let resposta = {idAudio};
+                    res.send(resposta);
+                    return resposta;
+                })
+            }
+        }
+    })
+
+  }else {
+    res.send("É necessário fornecer o identificador do chat (idChat) e o texto (text) a ser sintetizado.");
+    return;
+  }
 });
 
 /**
