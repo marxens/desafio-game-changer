@@ -10,7 +10,9 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 app.use(cors());
 
-port = 9002;
+require('dotenv').config({ silent: true });
+
+const port = process.env.PORT || 9002;
 app.listen(port);
 console.log('Server started! At http://localhost:' + port);
 
@@ -78,7 +80,7 @@ app.get('/audio/synthesizeTextAmazon', (req, res) => {
     // Load the SDK
     const AWS = require('aws-sdk')
 
-    AWS.config.credentials = new AWS.Credentials("AKIAIEAFZBF43XJKMP3A", "0nJ08y69ePG7gpXc9bCYUF/ecI91rp82GnJPjOQ8");
+    AWS.config.credentials = new AWS.Credentials(process.env.AMAZON_T2S_ACCESS_KEY_ID, process.env.AMAZON_T2S_SECRET_ACCESS_KEY);
 
     const Fs = require('fs')
 
@@ -117,6 +119,57 @@ app.get('/audio/synthesizeTextAmazon', (req, res) => {
     return;
   }
 });
+
+
+/**
+ * Sintetizar áudio a partir de texto fornecido. 
+ */
+app.get('/audio/synthesizeTextIBM', (req, res) => {
+
+  const idChat = req.query.idChat;
+  const idAudio = idChat+'_'+(new Date()).getTime();
+  const text = req.query.text;
+  const outputFile = 'audios/' + idAudio + '.mp3'
+  
+  if(idAudio && text) {
+    const TextToSpeechV1 = require('watson-developer-cloud/text-to-speech/v1');
+    const fs = require('fs');
+
+    const textToSpeech = new TextToSpeechV1({
+      "url": process.env.WATSON_T2S_URL,
+      "username": process.env.WATSON_T2S_USERNAME,
+      "password": process.env.WATSON_T2S_PASSWORD
+    });
+
+    let params = {
+      text: text,
+      accept: 'audio/mp3',
+      voice: 'pt-BR_IsabelaVoice'
+    };
+    
+    textToSpeech.synthesize(params, (err, data) => {
+      if (err) {
+          console.log(err.code)
+          console.log("ERRO");
+      } else if (data) {
+            fs.writeFile(outputFile, data, function(err) {
+              if (err) {
+                console.error('ERROR:', err);
+                return;
+              }
+              let resposta = {idAudio};
+              res.send(resposta);
+              return resposta;
+          })
+      }
+    });
+
+  }else {
+    res.send("É necessário fornecer o identificador do chat (idChat) e o texto (text) a ser sintetizado.");
+    return;
+  }
+});
+
 
 /**
  * Áudio streaming a partir do idAudio fornecido.
